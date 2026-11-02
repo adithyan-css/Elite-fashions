@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Elite Fashions — online store
 
-## Getting Started
+Online store for **Elite Fashions**, 188 Annapoorani Complex, Mettur Road, Erode. Shoppers browse girls' festive and party wear, keep a wishlist, fill a cart, and **order on WhatsApp**. The owner, **Sivaani**, runs products, orders, payments and bills from a private admin panel.
 
-First, run the development server:
+## What's inside
+
+| Area | Features |
+| --- | --- |
+| Store | Home with festive banner, shop with filters (category, size, brand, colour, price), search by name or design no., product pages with colour variants, zoom, size stock |
+| Shopper | Wishlist and cart saved on the phone, checkout form, WhatsApp order message, private order-status page with bill download |
+| About | Meet the owner (Sivaani, photo, story), store address, timings, map |
+| Admin (`/admin`) | Secure login, dashboard (orders today, awaiting payment, sales, low stock), products with photos/sizes/stock, orders with status flow, mark-as-paid, numbered PDF bills, one-tap WhatsApp messages, store settings |
+| Bills | `INV/2026-27/0001` numbering per financial year, amount in words, GST split (CGST/SGST) when a GSTIN is set |
+
+**Stack:** Next.js 16 (App Router, Cache Components) · TypeScript · Tailwind CSS 4 · Drizzle ORM · PostgreSQL (Supabase) · Supabase Auth & Storage (optional) · pdf-lib · Sharp · Zod.
+
+## Run it on your computer
+
+Needs Node.js 20.9+ and a Postgres database (your Supabase project).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local      # then fill it in (see below)
+npm run db:setup                # creates tables, loads the 21 dresses, creates the owner login
+npm run dev                     # http://localhost:3000  (admin: /admin)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### `.env.local`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | What to put |
+| --- | --- |
+| `DATABASE_URL` | Supabase → **Connect** → connection string. Encode special characters in the password (`@` → `%40`). Use the **Transaction pooler** (port 6543) on Vercel; the direct or **Session pooler** string locally. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase → Project Settings → API. When set, the owner signs in with **Supabase Auth**. |
+| `SUPABASE_SECRET_KEY` | Supabase secret key (server only). Used by `db:seed` to create the owner login and the `product-images` bucket, and for photo uploads. **Never** expose it in the browser. |
+| `STORAGE_DRIVER` | `supabase` to store product photos in Supabase Storage, `local` for disk (dev / VPS). |
+| `AUTH_SECRET` | 32+ random characters (`openssl rand -base64 48`). |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Sivaani's login. The password must be changed on first sign-in. Quote it if it contains `#`. |
+| `STORE_WHATSAPP` | Shop WhatsApp number with country code, digits only (e.g. `919876543210`). Editable later in Settings. |
+| `NEXT_PUBLIC_SITE_URL` | The site address (used in WhatsApp messages and bill links). |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Security: every table has row-level security enabled with no policies, so Supabase's public Data API (publishable key) cannot read orders or logins. The app connects to Postgres directly.
 
-## Learn More
+## Deploy (Vercel + Supabase)
 
-To learn more about Next.js, take a look at the following resources:
+1. Import the GitHub repo in Vercel.
+2. Add the variables above (use the Transaction pooler `DATABASE_URL`, `STORAGE_DRIVER=supabase`, your real domain in `NEXT_PUBLIC_SITE_URL`).
+3. Run `npm run db:setup` once from your computer against the production database.
+4. Deploy, open `/admin`, sign in, change the password, then go to **Settings** and fill in WhatsApp number, UPI ID, timings, GSTIN (if registered).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Daily use (owner)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. A shopper orders on the site; WhatsApp opens on their phone with the order typed out and sends it to you.
+2. In **Admin → Orders**, open the order and tap **Send payment request (UPI)**.
+3. When the money arrives, enter it under **Mark as paid**. Stock is reduced and a bill is created.
+4. Tap **Send bill on WhatsApp**. Then mark **Packed → Shipped / Ready for pickup → Delivered**; the shopper's status page updates.
 
-## Deploy on Vercel
+## Quality checks
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run typecheck && npm run lint && npm test     # 22 unit tests
+npm run build && npm start                         # then, with Playwright available:
+node audit/storefront.cjs   # 49 checks: pages, filters, mobile layout, SEO, cart
+node audit/checkout.cjs     # 21 checks: server-side pricing, tampering, stock, private links
+node audit/admin.cjs        # 29 checks: guards, lock-out, forged cookies, uploads, product edits
+node audit/orders.cjs       # 26 checks: payments, stock, bill numbers, PDF, status flow
+node audit/settings-about.cjs  # 19 checks: About page, settings, security headers
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The audits use a local test database (`postgres://postgres@127.0.0.1:5433/elite`); don't run them against production.
+
+## Notes
+
+- The starting 21 products use **placeholder prices and 3 pieces per size**. Set real prices and stock before launch.
+- GST rates (5% up to ₹2,500 per piece, 18% above, from 22 Sep 2025) are settings, not code; confirm with your accountant.

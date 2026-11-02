@@ -31,6 +31,7 @@ async function placeOrder(browser, slug, size, qty, phone) {
   const admin = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
   const a = await admin.newPage();
   try {
+    psql("delete from orders"); psql("update product_sizes set stock=3");
     const o1 = await placeOrder(browser, "tulip-es-8322-p-pink-sharara", "20", 2, "9840011122");
     const o2 = await placeOrder(browser, "knk-7870-mauve-frill-top-lace-skirt", "22", 1, "9840011133");
     ok("two orders placed", o1.orderNo && o2.orderNo, `${o1.orderNo} ${o2.orderNo}`);

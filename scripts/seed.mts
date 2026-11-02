@@ -48,6 +48,19 @@ if (n === 0) {
 // owner account
 const email = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
 const password = process.env.ADMIN_PASSWORD ?? "";
+const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const sbSecret = process.env.SUPABASE_SECRET_KEY;
+if (email && password && sbUrl && sbSecret) {
+  // Supabase Auth mode: create the login in Supabase (idempotent) so the owner can sign in
+  const { createClient } = await import("@supabase/supabase-js");
+  const admin = createClient(sbUrl, sbSecret, { auth: { persistSession: false } });
+  const { error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  if (error && !/already/i.test(error.message)) throw new Error(`Supabase user: ${error.message}`);
+  console.log(error ? "Supabase login already exists for " + email : "Supabase login created for " + email);
+  const bucket = process.env.SUPABASE_BUCKET ?? "product-images";
+  const b = await admin.storage.createBucket(bucket, { public: true, fileSizeLimit: "8MB", allowedMimeTypes: ["image/webp"] });
+  console.log(b.error ? `storage bucket "${bucket}": ${b.error.message}` : `storage bucket "${bucket}" created`);
+}
 if (email && password) {
   const existing = await db.select().from(s.adminUsers).where(eq(s.adminUsers.email, email));
   if (existing.length === 0) {
