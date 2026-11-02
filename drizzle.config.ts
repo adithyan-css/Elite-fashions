@@ -1,11 +1,8 @@
 import type { Config } from "drizzle-kit";
 
-const url = process.env.DATABASE_URL ?? "file:./data/store.db";
-const remote = !url.startsWith("file:");
-
 export default {
   schema: "./src/db/schema.ts",
   out: "./drizzle",
-  dialect: remote ? "turso" : "sqlite",
-  dbCredentials: remote ? { url, authToken: process.env.DATABASE_AUTH_TOKEN } : { url },
+  dialect: "postgresql",
+  dbCredentials: { url: process.env.DATABASE_URL ?? "postgres://postgres@127.0.0.1:5433/elite" },
 } satisfies Config;

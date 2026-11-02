@@ -1,12 +1,14 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { pgOptions } from "../src/db/options.ts";
 import { count, eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import * as s from "../src/db/schema.ts";
 import { SEED_PRODUCTS, DEFAULT_SETTINGS } from "../src/db/seed-data.ts";
 
-const url = process.env.DATABASE_URL ?? "file:./data/store.db";
-const client = createClient({ url, authToken: process.env.DATABASE_AUTH_TOKEN || undefined });
+const url = process.env.DATABASE_URL;
+if (!url) throw new Error("DATABASE_URL is not set");
+const client = postgres(url, { ...pgOptions(url), max: 1 });
 const db = drizzle(client, { schema: s });
 
 // settings: insert missing keys only (never overwrite owner edits)
@@ -54,4 +56,4 @@ if (email && password) {
     console.log("owner account created for", email);
   } else console.log("owner account exists");
 } else console.log("ADMIN_EMAIL / ADMIN_PASSWORD not set, owner account not created");
-client.close();
+await client.end();

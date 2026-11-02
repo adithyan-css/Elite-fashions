@@ -1,12 +1,11 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-import { migrate } from "drizzle-orm/libsql/migrator";
-import { mkdirSync } from "node:fs";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { pgOptions } from "../src/db/options.ts";
 
-const url = process.env.DATABASE_URL ?? "file:./data/store.db";
-if (url.startsWith("file:")) mkdirSync("data", { recursive: true });
-const client = createClient({ url, authToken: process.env.DATABASE_AUTH_TOKEN || undefined });
-await migrate(drizzle(client), { migrationsFolder: "./drizzle" });
-await client.execute("PRAGMA journal_mode=WAL").catch(() => {});
-console.log("migrations applied to", url.startsWith("file:") ? url : "remote database");
-client.close();
+const url = process.env.DATABASE_URL;
+if (!url) throw new Error("DATABASE_URL is not set");
+const sql = postgres(url, { ...pgOptions(url), max: 1 });
+await migrate(drizzle(sql), { migrationsFolder: "./drizzle" });
+console.log("migrations applied to", new URL(url).host);
+await sql.end();

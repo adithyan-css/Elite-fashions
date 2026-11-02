@@ -1,12 +1,11 @@
-import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { boolean, index, integer, pgTable, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
-const now = sql`(unixepoch() * 1000)`;
+const createdAt = () => timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow();
 
-export const products = sqliteTable(
+export const products = pgTable(
   "products",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     designNo: text("design_no").notNull().default(""),
@@ -17,19 +16,19 @@ export const products = sqliteTable(
     pricePaise: integer("price_paise").notNull(),
     mrpPaise: integer("mrp_paise"),
     tags: text("tags").notNull().default(""), // comma separated: new,sale,diwali
-    isFeatured: integer("is_featured", { mode: "boolean" }).notNull().default(false),
-    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
     groupKey: text("group_key"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(now),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("products_slug_uq").on(t.slug), index("products_category_idx").on(t.category)],
 );
 
-export const productImages = sqliteTable(
+export const productImages = pgTable(
   "product_images",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     productId: integer("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
@@ -40,10 +39,10 @@ export const productImages = sqliteTable(
   (t) => [index("product_images_product_idx").on(t.productId)],
 );
 
-export const productSizes = sqliteTable(
+export const productSizes = pgTable(
   "product_sizes",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     productId: integer("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
@@ -65,10 +64,10 @@ export const ORDER_STATUSES = [
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const orders = sqliteTable(
+export const orders = pgTable(
   "orders",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     orderNo: text("order_no").notNull(),
     status: text("status", { enum: ORDER_STATUSES }).notNull().default("awaiting_payment"),
     customerName: text("customer_name").notNull(),
@@ -80,52 +79,64 @@ export const orders = sqliteTable(
     discountPaise: integer("discount_paise").notNull().default(0),
     totalPaise: integer("total_paise").notNull(),
     viewToken: text("view_token").notNull(),
-    stockApplied: integer("stock_applied", { mode: "boolean" }).notNull().default(false),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(now),
+    stockApplied: boolean("stock_applied").notNull().default(false),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex("orders_no_uq").on(t.orderNo), index("orders_status_idx").on(t.status)],
+  (t) => [uniqueIndex("orders_no_uq").on(t.orderNo), index("orders_status_idx").on(t.status), index("orders_created_idx").on(t.createdAt)],
 );
 
-export const orderItems = sqliteTable("order_items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  orderId: integer("order_id")
-    .notNull()
-    .references(() => orders.id, { onDelete: "cascade" }),
-  productId: integer("product_id").references(() => products.id, { onDelete: "set null" }),
-  name: text("name").notNull(),
-  designNo: text("design_no").notNull().default(""),
-  sizeLabel: text("size_label").notNull(),
-  unitPricePaise: integer("unit_price_paise").notNull(),
-  qty: integer("qty").notNull(),
-  imageUrl: text("image_url").notNull().default(""),
-});
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    productId: integer("product_id").references(() => products.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    designNo: text("design_no").notNull().default(""),
+    sizeLabel: text("size_label").notNull(),
+    unitPricePaise: integer("unit_price_paise").notNull(),
+    qty: integer("qty").notNull(),
+    imageUrl: text("image_url").notNull().default(""),
+  },
+  (t) => [index("order_items_order_idx").on(t.orderId)],
+);
 
-export const orderEvents = sqliteTable("order_events", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  orderId: integer("order_id")
-    .notNull()
-    .references(() => orders.id, { onDelete: "cascade" }),
-  status: text("status").notNull(),
-  note: text("note").notNull().default(""),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
-});
+export const orderEvents = pgTable(
+  "order_events",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (t) => [index("order_events_order_idx").on(t.orderId)],
+);
 
-export const payments = sqliteTable("payments", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  orderId: integer("order_id")
-    .notNull()
-    .references(() => orders.id, { onDelete: "cascade" }),
-  method: text("method", { enum: ["upi", "cash", "card", "bank"] }).notNull(),
-  amountPaise: integer("amount_paise").notNull(),
-  reference: text("reference").notNull().default(""),
-  receivedAt: integer("received_at", { mode: "timestamp_ms" }).notNull().default(now),
-});
+export const payments = pgTable(
+  "payments",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    method: text("method", { enum: ["upi", "cash", "card", "bank"] }).notNull(),
+    amountPaise: integer("amount_paise").notNull(),
+    reference: text("reference").notNull().default(""),
+    receivedAt: timestamp("received_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("payments_order_idx").on(t.orderId)],
+);
 
-export const invoices = sqliteTable(
+export const invoices = pgTable(
   "invoices",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     orderId: integer("order_id")
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
@@ -133,7 +144,7 @@ export const invoices = sqliteTable(
     fy: text("fy").notNull(),
     seq: integer("seq").notNull(),
     snapshot: text("snapshot").notNull(), // frozen JSON of everything printed on the bill
-    issuedAt: integer("issued_at", { mode: "timestamp_ms" }).notNull().default(now),
+    issuedAt: timestamp("issued_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("invoices_no_uq").on(t.invoiceNo),
@@ -142,39 +153,39 @@ export const invoices = sqliteTable(
   ],
 );
 
-export const settings = sqliteTable("settings", {
+export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
 });
 
-export const adminUsers = sqliteTable(
+export const adminUsers = pgTable(
   "admin_users",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     email: text("email").notNull(),
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
     role: text("role", { enum: ["owner", "staff"] }).notNull().default("owner"),
     sessionVersion: integer("session_version").notNull().default(1),
-    mustChangePassword: integer("must_change_password", { mode: "boolean" }).notNull().default(true),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
+    mustChangePassword: boolean("must_change_password").notNull().default(true),
+    createdAt: createdAt(),
   },
   (t) => [uniqueIndex("admin_users_email_uq").on(t.email)],
 );
 
-export const loginAttempts = sqliteTable(
+export const loginAttempts = pgTable(
   "login_attempts",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     ip: text("ip").notNull(),
     email: text("email").notNull(),
-    success: integer("success", { mode: "boolean" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
+    success: boolean("success").notNull(),
+    createdAt: createdAt(),
   },
   (t) => [index("login_attempts_ip_idx").on(t.ip, t.createdAt), index("login_attempts_email_idx").on(t.email, t.createdAt)],
 );
 
-export const counters = sqliteTable("counters", {
+export const counters = pgTable("counters", {
   key: text("key").primaryKey(),
   value: integer("value").notNull().default(0),
 });

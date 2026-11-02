@@ -1,18 +1,14 @@
 import "server-only";
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
+import { pgOptions } from "./options";
 
-const globalForDb = globalThis as unknown as { __efClient?: ReturnType<typeof createClient> };
+const globalForDb = globalThis as unknown as { __efSql?: ReturnType<typeof postgres> };
 
-const client =
-  globalForDb.__efClient ??
-  createClient({
-    url: process.env.DATABASE_URL ?? "file:./data/store.db",
-    authToken: process.env.DATABASE_AUTH_TOKEN || undefined,
-  });
+const sql = globalForDb.__efSql ?? postgres(process.env.DATABASE_URL ?? "postgres://postgres@127.0.0.1:5433/elite", pgOptions());
 
-if (process.env.NODE_ENV !== "production") globalForDb.__efClient = client;
+if (process.env.NODE_ENV !== "production") globalForDb.__efSql = sql;
 
-export const db = drizzle(client, { schema });
+export const db = drizzle(sql, { schema });
 export { schema };
