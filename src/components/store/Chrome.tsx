@@ -56,13 +56,13 @@ export function Footer({ s }: { s: Record<string, string> }) {
           <ul className="mt-4 space-y-2 text-sm">
             {NAV.slice(0, 5).map((n) => (
               <li key={n.href}>
-                <Link className="hover:text-white" href={n.href}>
+                <Link className="inline-block py-1.5 hover:text-white" href={n.href}>
                   {n.label}
                 </Link>
               </li>
             ))}
             <li>
-              <Link className="hover:text-white" href="/wishlist">
+              <Link className="inline-block py-1.5 hover:text-white" href="/wishlist">
                 Wishlist
               </Link>
             </li>
@@ -73,14 +73,14 @@ export function Footer({ s }: { s: Record<string, string> }) {
           <ul className="mt-4 space-y-3 text-sm">
             <li className="flex gap-2">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold-soft" />
-              <a href={s.map_url} target="_blank" rel="noopener" className="hover:text-white">
+              <a href={s.map_url} target="_blank" rel="noopener" className="inline-block py-1.5 hover:text-white">
                 {s.address_line}, {s.city}
               </a>
             </li>
             {s.phone_display && (
               <li className="flex gap-2">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gold-soft" />
-                <a href={`tel:${s.phone_display.replace(/\s/g, "")}`} className="hover:text-white">
+                <a href={`tel:${s.phone_display.replace(/\s/g, "")}`} className="inline-block py-1.5 hover:text-white">
                   {s.phone_display}
                 </a>
               </li>
@@ -89,13 +89,13 @@ export function Footer({ s }: { s: Record<string, string> }) {
             {s.instagram && (
               <li className="flex gap-2">
                 <AtSign className="mt-0.5 h-4 w-4 shrink-0 text-gold-soft" />
-                <a href={`https://www.instagram.com/${s.instagram}/`} target="_blank" rel="noopener" className="hover:text-white">
+                <a href={`https://www.instagram.com/${s.instagram}/`} target="_blank" rel="noopener" className="inline-block py-1.5 hover:text-white">
                   @{s.instagram}
                 </a>
               </li>
             )}
             <li>
-              <Link href="/about" className="text-gold-soft hover:text-white">
+              <Link href="/about" className="inline-block py-1.5 text-gold-soft hover:text-white">
                 Meet the owner →
               </Link>
             </li>

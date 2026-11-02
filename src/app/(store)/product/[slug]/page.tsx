@@ -58,16 +58,16 @@ async function Detail({ params }: { params: PageProps<"/product/[slug]">["params
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <nav className="flex items-center gap-1 text-xs text-muted" aria-label="Breadcrumb">
-        <Link href="/shop" className="hover:text-magenta">
+      <nav className="flex min-w-0 items-center gap-1 text-xs text-muted" aria-label="Breadcrumb">
+        <Link href="/shop" className="shrink-0 py-2 hover:text-magenta">
           Shop
         </Link>
         <ChevronRight className="h-3 w-3" />
-        <Link href={`/shop?category=${p.category}`} className="hover:text-magenta">
+        <Link href={`/shop?category=${p.category}`} className="shrink-0 whitespace-nowrap py-2 hover:text-magenta">
           {categoryName(p.category)}
         </Link>
         <ChevronRight className="h-3 w-3" />
-        <span className="truncate text-ink">{p.name}</span>
+        <span className="min-w-0 truncate text-ink">{p.name}</span>
       </nav>
 
       <div className="mt-5 grid gap-8 lg:grid-cols-2 lg:gap-14">
