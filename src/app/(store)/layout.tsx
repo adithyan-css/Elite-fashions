@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { getSettings } from "@/lib/catalog";
-import { AnnouncementBar, Footer, Header, WhatsAppFab } from "@/components/store/Chrome";
+import { AnnouncementBar, Footer, Header } from "@/components/store/Chrome";
+import { WhatsAppFab } from "@/components/store/WhatsAppFab";
 
 export default async function StoreLayout({ children }: LayoutProps<"/">) {
   const s = await getSettings();
@@ -14,7 +16,9 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
       <Footer s={s} />
-      <WhatsAppFab number={s.whatsapp} storeName={s.store_name} />
+      <Suspense fallback={null}>
+        <WhatsAppFab number={s.whatsapp} storeName={s.store_name} />
+      </Suspense>
     </>
   );
 }

@@ -18,10 +18,10 @@ const report = () => { for (const r of results) console.log(`${r.pass ? "PASS" :
   await page.goto(BASE + "/product/tulip-es-8322-p-pink-sharara", { waitUntil: "load" });
   await page.getByRole("radio", { name: "20" }).click();
   await page.getByRole("button", { name: "Increase quantity" }).click();
-  await page.getByRole("button", { name: "Add to cart" }).click();
+  await page.getByRole("button", { name: "Add to cart" }).first().click();
   await page.goto(BASE + "/product/knk-7080-sage-collared-skirt-set", { waitUntil: "load" });
   await page.getByRole("radio", { name: "24" }).click();
-  await page.getByRole("button", { name: "Add to cart" }).click();
+  await page.getByRole("button", { name: "Add to cart" }).first().click();
   await page.goto(BASE + "/cart", { waitUntil: "load" });
   await page.waitForSelector('[data-testid="cart-line"]');
   ok("cart shows 2 lines", (await page.locator('[data-testid="cart-line"]').count()) === 2);

@@ -16,11 +16,11 @@ export function AnnouncementBar({ text }: { text: string }) {
 export function Header({ storeName }: { storeName: string }) {
   return (
     <header className="sticky top-0 z-40 border-b border-sand/70 bg-ivory/90 backdrop-blur supports-[backdrop-filter]:bg-ivory/75">
-      <div className="container-x relative flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5" aria-label={`${storeName} home`}>
-          <Image src="/brand/logo.png" alt="" width={40} height={40} className="h-10 w-10 rounded-full ring-2 ring-gold/60" priority />
-          <span className="leading-tight">
-            <span className="block font-display text-lg font-semibold text-plum sm:text-xl">{storeName}</span>
+      <div className="container-x relative flex h-16 items-center justify-between gap-2 sm:gap-4">
+        <Link href="/" className="flex min-w-0 items-center gap-1.5 min-[390px]:gap-2 sm:gap-2.5" aria-label={`${storeName} home`}>
+          <Image src="/brand/logo.png" alt="" width={40} height={40} className="h-8 w-8 shrink-0 rounded-full ring-2 ring-gold/60 min-[390px]:h-9 min-[390px]:w-9 sm:h-10 sm:w-10" priority />
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate font-display text-[15px] font-semibold whitespace-nowrap text-plum min-[390px]:text-lg sm:text-xl">{storeName}</span>
             <span className="block text-[10px] tracking-[0.2em] text-muted uppercase">Erode</span>
           </span>
         </Link>
@@ -108,19 +108,5 @@ export function Footer({ s }: { s: Record<string, string> }) {
         </p>
       </div>
     </footer>
-  );
-}
-
-export function WhatsAppFab({ number, storeName }: { number: string; storeName: string }) {
-  return (
-    <a
-      href={waLink(number, `Hi ${storeName}! I have a question.`)}
-      target="_blank"
-      rel="noopener"
-      aria-label="Chat with us on WhatsApp"
-      className="fixed right-4 bottom-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#1f9d55] text-white shadow-lg shadow-black/20 transition hover:scale-105 sm:right-6 sm:bottom-6"
-    >
-      <MessageCircle className="h-7 w-7" />
-    </a>
   );
 }

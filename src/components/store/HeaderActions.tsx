@@ -33,20 +33,20 @@ export function HeaderActions() {
 
   return (
     <>
-      <div className="flex items-center gap-1 sm:gap-2">
+      <div className="flex shrink-0 items-center gap-0 min-[390px]:gap-1 sm:gap-2">
         <button
           type="button"
           aria-label="Search"
           onClick={() => setSearching((v) => !v)}
-          className="relative grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-magenta-50"
+          className="relative grid h-9 w-9 place-items-center min-[390px]:h-10 min-[390px]:w-10 rounded-full text-ink hover:bg-magenta-50"
         >
           <Search className="h-5 w-5" />
         </button>
-        <Link href="/wishlist" aria-label={`Wishlist, ${wishN} items`} className="relative grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-magenta-50">
+        <Link href="/wishlist" aria-label={`Wishlist, ${wishN} items`} className="relative grid h-9 w-9 place-items-center min-[390px]:h-10 min-[390px]:w-10 rounded-full text-ink hover:bg-magenta-50">
           <Heart className="h-5 w-5" />
           <Badge n={wishN} />
         </Link>
-        <Link href="/cart" aria-label={`Cart, ${cartN} items`} className="relative grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-magenta-50">
+        <Link href="/cart" aria-label={`Cart, ${cartN} items`} className="relative grid h-9 w-9 place-items-center min-[390px]:h-10 min-[390px]:w-10 rounded-full text-ink hover:bg-magenta-50">
           <ShoppingBag className="h-5 w-5" />
           <Badge n={cartN} />
         </Link>
@@ -55,7 +55,7 @@ export function HeaderActions() {
           aria-label="Open menu"
           aria-expanded={open}
           onClick={() => setOpen(true)}
-          className="grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-magenta-50 lg:hidden"
+          className="grid h-9 w-9 place-items-center rounded-full text-ink hover:bg-magenta-50 min-[390px]:h-10 min-[390px]:w-10 lg:hidden"
         >
           <Menu className="h-5 w-5" />
         </button>

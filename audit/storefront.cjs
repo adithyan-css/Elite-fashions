@@ -52,10 +52,10 @@ const ok = (name, cond, extra = "") => { results.push({ name, pass: !!cond, extr
   // product page: variant link, wishlist toggle, add to cart requires size
   await page.goto(BASE + "/product/knk-7870-mauve-frill-top-lace-skirt", { waitUntil: "load" });
   ok("variant thumbnails shown", (await page.locator('a[aria-label$="colour"]').count()) === 2);
-  await page.getByRole("button", { name: "Add to cart" }).click();
+  await page.getByRole("button", { name: "Add to cart" }).first().click();
   ok("add without size shows error", await page.getByText("Please choose a size").isVisible());
   await page.getByRole("radio", { name: "20" }).click();
-  await page.getByRole("button", { name: "Add to cart" }).click();
+  await page.getByRole("button", { name: "Add to cart" }).first().click();
   ok("cart badge = 1", (await page.getByRole("link", { name: /Cart, 1 items/ }).count()) === 1);
   await page.getByRole("button", { name: "Add to wishlist" }).click();
   ok("wishlist badge = 1", (await page.getByRole("link", { name: /Wishlist, 1 items/ }).count()) === 1);

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { MAX_QTY, useCart } from "@/store/cart";
+import { formatPrice } from "@/lib/money";
 import { WishButton } from "./WishButton";
 
 type Props = {
@@ -23,6 +24,40 @@ export function ProductPurchase({ product, sizes }: Props) {
   const chosen = sizes.find((s) => s.label === size);
   const maxQty = Math.min(MAX_QTY, chosen?.stock ?? MAX_QTY);
   const soldOut = sizes.every((s) => s.stock <= 0);
+  const sizeBox = useRef<HTMLFieldSetElement>(null);
+  const mainButtons = useRef<HTMLDivElement>(null);
+  const [showBar, setShowBar] = useState(false);
+  const bar = useRef<HTMLDivElement>(null);
+
+  // Phones: keep "Add to cart" in reach while the shopper scrolls photos and details.
+  useEffect(() => {
+    const el = mainButtons.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting), { rootMargin: "0px 0px -90px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [soldOut]);
+  // Reserve room under the page so the sticky bar never covers the footer.
+  useEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => (document.body.style.paddingBottom = mq.matches ? `${el.offsetHeight}px` : "");
+    apply();
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(apply);
+    ro?.observe(el);
+    mq.addEventListener("change", apply);
+    return () => {
+      ro?.disconnect();
+      mq.removeEventListener("change", apply);
+      document.body.style.paddingBottom = "";
+    };
+  }, [soldOut]);
+
+  const barAdd = () => {
+    if (doAdd()) return;
+    sizeBox.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const doAdd = () => {
     if (!size) {
@@ -36,8 +71,8 @@ export function ProductPurchase({ product, sizes }: Props) {
   };
 
   return (
-    <div className="space-y-5">
-      <fieldset>
+    <div ref={mainButtons} className="space-y-5">
+      <fieldset ref={sizeBox} className="scroll-mt-24">
         <legend className="mb-2 flex w-full items-center justify-between text-sm font-semibold text-ink">
           <span>Size {size && <span className="font-normal text-muted">· {size}</span>}</span>
         </legend>
@@ -112,6 +147,32 @@ export function ProductPurchase({ product, sizes }: Props) {
             View cart
           </Link>
         </p>
+      )}
+      {!soldOut && (
+        <div
+          ref={bar}
+          className={`fixed inset-x-0 bottom-0 z-40 !m-0 border-t border-sand bg-white/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-6px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-transform duration-200 lg:hidden ${
+            showBar ? "translate-y-0" : "translate-y-full"
+          }`}
+          aria-hidden={!showBar}
+          data-testid="sticky-buy-bar"
+        >
+          <div className="mx-auto flex max-w-xl items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs text-muted">{size ? `Size ${size}${qty > 1 ? ` × ${qty}` : ""}` : "Choose a size"}</p>
+              <p className="text-lg leading-tight font-semibold text-plum">{formatPrice(product.pricePaise * qty)}</p>
+            </div>
+            <button type="button" tabIndex={showBar ? 0 : -1} onClick={barAdd} className="btn-primary h-12 shrink-0 px-6 text-base">
+              {added ? <Check className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
+              {added ? "Added" : size ? "Add to cart" : "Select size"}
+            </button>
+            {added && (
+              <Link href="/cart" tabIndex={showBar ? 0 : -1} className="btn-gold h-12 shrink-0 px-4 text-base">
+                Cart
+              </Link>
+            )}
+          </div>
+        </div>
       )}
       <WishButton withLabel className="w-full" item={{ productId: product.id, slug: product.slug, name: product.name, image: product.image, pricePaise: product.pricePaise, designNo: product.designNo }} />
     </div>

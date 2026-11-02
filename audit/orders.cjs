@@ -16,7 +16,7 @@ async function placeOrder(browser, slug, size, qty, phone) {
   await p.waitForTimeout(800);
   await p.getByRole("radio", { name: size }).click();
   for (let i = 1; i < qty; i++) await p.getByRole("button", { name: "Increase quantity" }).click();
-  await p.getByRole("button", { name: "Add to cart" }).click();
+  await p.getByRole("button", { name: "Add to cart" }).first().click();
   await p.goto(`${BASE}/checkout`, { waitUntil: "load" });
   await p.waitForTimeout(800);
   await p.fill("#customerName", "Kavya S"); await p.fill("#phone", phone);
