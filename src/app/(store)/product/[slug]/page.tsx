@@ -11,9 +11,11 @@ import { ProductCard } from "@/components/store/ProductCard";
 import { ProductGallery } from "@/components/store/ProductGallery";
 import { ProductPurchase } from "@/components/store/ProductPurchase";
 
+// Pre-build only the featured dresses; the rest are built on first visit and then cached.
 export async function generateStaticParams() {
   const all = await getCatalog();
-  return all.map((p) => ({ slug: p.slug }));
+  const featured = all.filter((p) => p.isFeatured).slice(0, 4);
+  return (featured.length ? featured : all.slice(0, 4)).map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/product/[slug]">): Promise<Metadata> {

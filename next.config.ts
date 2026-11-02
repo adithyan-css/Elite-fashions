@@ -34,6 +34,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // Gentle on the remote database during builds.
+  experimental: { staticGenerationMaxConcurrency: 2, staticGenerationRetryCount: 2 },
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],

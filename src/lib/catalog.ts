@@ -13,9 +13,11 @@ export function categoryName(slug: string): string {
 }
 
 async function loadAll(includeHidden: boolean): Promise<ProductCard[]> {
-  const rows = await db.select().from(s.products).orderBy(asc(s.products.id));
-  const imgs = await db.select().from(s.productImages).orderBy(asc(s.productImages.sortOrder), asc(s.productImages.id));
-  const sizes = await db.select().from(s.productSizes).orderBy(asc(s.productSizes.sortOrder), asc(s.productSizes.id));
+  const [rows, imgs, sizes] = await Promise.all([
+    db.select().from(s.products).orderBy(asc(s.products.id)),
+    db.select().from(s.productImages).orderBy(asc(s.productImages.sortOrder), asc(s.productImages.id)),
+    db.select().from(s.productSizes).orderBy(asc(s.productSizes.sortOrder), asc(s.productSizes.id)),
+  ]);
   return rows
     .filter((r) => includeHidden || r.isActive)
     .map((r) => {
@@ -53,22 +55,25 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
   "use cache";
   cacheLife("hours");
   cacheTag(PRODUCTS_TAG);
-  const [row] = await db.select().from(s.products).where(eq(s.products.slug, slug));
-  if (!row || !row.isActive) return null;
-  const all = await loadAll(false);
-  const card = all.find((p) => p.id === row.id)!;
-  const images = await db
-    .select()
-    .from(s.productImages)
-    .where(eq(s.productImages.productId, row.id))
-    .orderBy(asc(s.productImages.sortOrder), asc(s.productImages.id));
-  const variants = row.groupKey
-    ? all.filter((p) => p.groupKey === row.groupKey).map((p) => ({ slug: p.slug, colour: p.colour, image: p.image, name: p.name }))
+  // Reuse the cached catalogue, then fetch only this dress's description and photos.
+  const all = await getCatalog();
+  const card = all.find((p) => p.slug === slug);
+  if (!card) return null;
+  const [[row], images] = await Promise.all([
+    db.select({ description: s.products.description }).from(s.products).where(eq(s.products.id, card.id)),
+    db
+      .select()
+      .from(s.productImages)
+      .where(eq(s.productImages.productId, card.id))
+      .orderBy(asc(s.productImages.sortOrder), asc(s.productImages.id)),
+  ]);
+  const variants = card.groupKey
+    ? all.filter((p) => p.groupKey === card.groupKey).map((p) => ({ slug: p.slug, colour: p.colour, image: p.image, name: p.name }))
     : [];
   return {
     ...card,
-    description: row.description,
-    images: images.length ? images.map((i) => ({ url: i.url, alt: i.alt || row.name })) : [{ url: card.image, alt: card.imageAlt }],
+    description: row?.description ?? "",
+    images: images.length ? images.map((i) => ({ url: i.url, alt: i.alt || card.name })) : [{ url: card.image, alt: card.imageAlt }],
     variants,
   };
 }
