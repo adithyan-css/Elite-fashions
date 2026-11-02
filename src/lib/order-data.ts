@@ -38,6 +38,6 @@ export function statusUrl(orderNo: string, token: string): string {
   return `${siteUrl()}/order/${orderNo}?t=${token}`;
 }
 
-export function billUrl(invoiceNo: string, token: string): string {
-  return `${siteUrl()}/api/invoices/${encodeURIComponent(invoiceNo)}/pdf?t=${token}`;
+export function billUrl(orderNo: string, token: string): string {
+  return `${siteUrl()}/api/bill/${orderNo}?t=${token}`;
 }

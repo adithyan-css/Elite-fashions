@@ -87,7 +87,7 @@ async function OrderView({ params, searchParams }: PageProps<"/order/[orderNo]">
       )}
 
       {invoice && (
-        <a href={billUrl(invoice.invoiceNo, order.viewToken)} className="btn-primary mt-8 w-full" data-testid="bill-link">
+        <a href={billUrl(order.orderNo, order.viewToken)} className="btn-primary mt-8 w-full" data-testid="bill-link">
           <FileText className="h-4 w-4" /> Download bill {invoice.invoiceNo}
         </a>
       )}
