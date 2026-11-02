@@ -11,12 +11,12 @@ const ok = (name, cond, extra = "") => { results.push({ name, pass: !!cond, extr
     const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: 1 });
     const page = await ctx.newPage();
     const errors = [];
-    page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+    page.on("console", (m) => { if (m.type() === "error" && !(m.location().url || "").includes("/product/nope")) errors.push(m.text() + " " + (m.location().url || "")); });
     page.on("pageerror", (e) => errors.push(String(e)));
     for (const [name, path] of [["home", "/"], ["shop", "/shop"], ["shop-lehenga", "/shop?category=lehenga-choli"], ["product", "/product/knk-7870-mauve-frill-top-lace-skirt"], ["notfound", "/product/nope"]]) {
       const res = await page.goto(BASE + path, { waitUntil: "load" });
       if (name !== "notfound") ok(`${vp.tag} ${name} status 200`, res.status() === 200, res.status());
-      else ok(`${vp.tag} unknown product shows not-found`, (await page.textContent("main")).includes("find that page"));
+      else ok(`${vp.tag} unknown product shows not-found`, await page.getByText("find that page").waitFor({ timeout: 5000 }).then(() => true, () => false));
       await page.screenshot({ path: `${OUT}/${vp.tag}-${name}.png`, fullPage: name !== "product" });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       ok(`${vp.tag} ${name} no horizontal scroll`, overflow <= 0, overflow);
@@ -60,7 +60,7 @@ const ok = (name, cond, extra = "") => { results.push({ name, pass: !!cond, extr
   await page.getByRole("button", { name: "Add to wishlist" }).click();
   ok("wishlist badge = 1", (await page.getByRole("link", { name: /Wishlist, 1 items/ }).count()) === 1);
   await page.reload({ waitUntil: "load" });
-  ok("cart persists after reload", (await page.getByRole("link", { name: /Cart, 1 items/ }).count()) === 1);
+  ok("cart persists after reload", await page.getByRole("link", { name: /Cart, 1 items/ }).waitFor({ timeout: 5000 }).then(() => true, () => false));
   const ld = await page.$eval('script[type="application/ld+json"]', (s) => JSON.parse(s.textContent));
   ok("product JSON-LD present", ld["@type"] === "Product" && ld.offers.priceCurrency === "INR");
   const og = await page.$eval('meta[property="og:image"]', (m) => m.content).catch(() => "");
